@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DP ST-C</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,sans-serif;
+}
+
+body{
+background:#f4f4f4;
+color:#111;
+}
+
+/* HEADER */
+
+header{
+background:#c40000;
+color:white;
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:15px 30px;
+position:sticky;
+top:0;
+z-index:1000;
+}
+
+.logo{
+font-size:28px;
+font-weight:bold;
+}
+
+nav{
+display:flex;
+gap:18px;
+}
+
+nav a{
+color:white;
+text-decoration:none;
+font-weight:bold;
+cursor:pointer;
+opacity:0.9;
+}
+
+nav a:hover{
+opacity:1;
+}
+
+/* HERO */
+
+.hero{
+height:300px;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+text-align:center;
+color:white;
+
+background:
+linear-gradient(rgba(0,0,0,0.45),rgba(0,0,0,0.45)),
+url('https://images.unsplash.com/photo-1502877338535-766e1452684a?q=80&w=1600&auto=format&fit=crop');
+
+background-size:cover;
+background-position:center;
+}
+
+.hero h1{
+font-size:60px;
+}
+
+.hero p{
+font-size:22px;
+margin-top:10px;
+}
+
+/* CONTAINER */
+
+.container{
+max-width:1300px;
+margin:auto;
+padding:25px;
+}
+
+/* PAGE */
+
+.page{
+display:none;
+}
+
+.active{
+display:block;
+}
+
+/* CARD */
+
+.card{
+background:white;
+padding:25px;
+border-radius:18px;
+box-shadow:0 4px 18px rgba(0,0,0,0.1);
+margin-bottom:25px;
+}
+
+/* INPUTS */
+
+.input-wrap{
+position:relative;
+margin-bottom:15px;
+}
+
+input{
+width:100%;
+padding:14px;
+font-size:17px;
+border-radius:12px;
+border:2px solid #ddd;
+outline:none;
+}
+
+input:focus{
+border-color:#c40000;
+}
+
+/* SUGGESTIONS */
+
+.suggestions{
+position:absolute;
+top:58px;
+left:0;
+right:0;
+background:white;
+border-radius:12px;
+overflow:hidden;
+box-shadow:0 6px 18px rgba(0,0,0,0.15);
+display:none;
+z-index:100;
+}
+
+.suggestions div{
+padding:12px;
+cursor:pointer;
+}
+
+.suggestions div:hover{
+background:#f2f2f2;
+}
+
+/* BUTTON */
+
+button{
+background:#c40000;
+color:white;
+border:none;
+padding:14px 22px;
+font-size:17px;
+border-radius:12px;
+cursor:pointer;
+}
+
+button:hover{
+background:#a80000;
+}
+
+/* RESULT */
+
+#result{
+margin-top:20px;
+}
+
+/* BADGES */
+
+.badge{
+display:inline-block;
+padding:7px 12px;
+border-radius:10px;
+color:white;
+font-weight:bold;
+margin-bottom:10px;
+}
+
+.metro{
+background:#0066ff;
+}
+
+.vlak{
+background:#444;
+}
+
+.bus{
+background:#00aa55;
+}
+
+/* ROUTES */
+
+.route{
+padding:15px 0;
+border-bottom:1px solid #eee;
+}
+
+.route:last-child{
+border-bottom:none;
+}
+
+/* NOTICE */
+
+.notice{
+padding:16px;
+border-radius:12px;
+margin-bottom:15px;
+}
+
+.good{
+background:#d4edda;
+}
+
+.warn{
+background:#fff3cd;
+}
+
+/* MOBILE */
+
+@media(max-width:800px){
+
+.hero h1{
+font-size:42px;
+}
+
+nav{
+gap:10px;
+font-size:14px;
+}
+
+header{
+padding:15px;
+}
+
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+
+<div class="logo">
+DP ST-C
+</div>
+
+<nav>
+<a onclick="showPage('spojeni')">Spojení</a>
+<a onclick="showPage('jizdni')">Jízdní řády</a>
+<a onclick="showPage('mimoradnosti')">Mimořádnosti</a>
+</nav>
+
+</header>
+
+<section class="hero">
+
+<h1>DP ST-C</h1>
+<p>Doprava pro SirTros City</p>
+
+</section>
+
+<div class="container">
+
+<!-- SPOJENI -->
+
+<div id="spojeni" class="page active">
+
+<div class="card">
+
+<h2>Vyhledání spojení</h2>
+
+<br>
+
+<div class="input-wrap">
+<input type="text" id="from" placeholder="Odkud" oninput="suggest(this,'fromSug')">
+<div class="suggestions" id="fromSug"></div>
+</div>
+
+<div class="input-wrap">
+<input type="text" id="to" placeholder="Kam" oninput="suggest(this,'toSug')">
+<div class="suggestions" id="toSug"></div>
+</div>
+
+<button onclick="findRoute()">Hledat</button>
+
+<div id="result"></div>
+
+</div>
+
+</div>
+
+<!-- JIZDNI -->
+
+<div id="jizdni" class="page">
+
+<div class="card">
+
+<h2>Jízdní řády</h2>
+
+<br>
+
+<div class="route">
+<span class="badge bus">101</span>
+Náměstí → Vesnice → Nemocnice → Banka
+</div>
+
+<div class="route">
+<span class="badge bus">205</span>
+Náměstí → Obchodní centrum → Vesnice → Nemocnice
+</div>
+
+<div class="route">
+<span class="badge metro">M1</span>
+Banka → Škola → Parkoviště
+</div>
+
+<div class="route">
+<span class="badge vlak">V1</span>
+Letiště → Vesnice → Nemocnice → Radnice → Obchodní centrum → Les
+</div>
+
+</div>
+
+</div>
+
+<!-- MIMORADNOSTI -->
+
+<div id="mimoradnosti" class="page">
+
+<div class="card">
+
+<h2>Mimořádnosti</h2>
+
+<br>
+
+<div class="notice good">
+Metro M1 jezdí bez omezení.
+</div>
+
+<div class="notice warn">
+Bus 205 má zpoždění 3 minuty.
+</div>
+
+<div class="notice good">
+Vlak V1 jezdí bez omezení.
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+/* STOPS */
+
+const stops=[
+"Letiště",
+"Nemocnice",
+"Radnice",
+"Obchodní centrum",
+"Les",
+"Škola",
+"Banka",
+"Parkoviště",
+"Náměstí",
+"Vesnice"
+];
+
+/* LINES */
+
+const lines=[
+
+{
+type:"metro",
+name:"M1",
+color:"#0066ff",
+stops:["Banka","Škola","Parkoviště"]
+},
+
+{
+type:"vlak",
+name:"V1",
+color:"#444",
+stops:["Letiště","Vesnice","Nemocnice","Radnice","Obchodní centrum","Les"]
+},
+
+{
+type:"bus",
+name:"101",
+color:"#00aa55",
+stops:["Náměstí","Vesnice","Nemocnice","Banka"]
+},
+
+{
+type:"bus",
+name:"205",
+color:"#ff8800",
+stops:["Náměstí","Obchodní centrum","Vesnice","Nemocnice"]
+}
+
+];
+
+/* MENU */
+
+function showPage(id){
+
+document.querySelectorAll(".page").forEach(page=>{
+page.classList.remove("active");
+});
+
+document.getElementById(id).classList.add("active");
+
+}
+
+/* AUTOCOMPLETE */
+
+function suggest(input,id){
+
+const box=document.getElementById(id);
+
+box.innerHTML="";
+
+const value=input.value.toLowerCase();
+
+if(!value){
+box.style.display="none";
+return;
+}
+
+const filtered=stops.filter(stop=>
+stop.toLowerCase().includes(value)
+);
+
+filtered.forEach(stop=>{
+
+const div=document.createElement("div");
+
+div.innerText=stop;
+
+div.onclick=()=>{
+input.value=stop;
+box.style.display="none";
+};
+
+box.appendChild(div);
+
+});
+
+box.style.display=filtered.length ? "block" : "none";
+
+}
+
+/* SEARCH */
+
+function findRoute(){
+
+const from=document.getElementById("from").value;
+const to=document.getElementById("to").value;
+
+const result=document.getElementById("result");
+
+result.innerHTML="";
+
+/* DIRECT */
+
+for(let line of lines){
+
+const i1=line.stops.indexOf(from);
+const i2=line.stops.indexOf(to);
+
+if(i1!=-1 && i2!=-1){
+
+result.innerHTML=`
+
+<br>
+
+<div class="card">
+
+<span class="badge" style="background:${line.color}">
+${line.name}
+</span>
+
+<h3>Přímé spojení</h3>
+
+<br>
+
+${from} → ${to}
+
+<br><br>
+
+Typ dopravy:
+<b>${line.type}</b>
+
+</div>
+
+`;
+
+return;
+
+}
+
+}
+
+/* TRANSFER */
+
+for(let l1 of lines){
+
+if(!l1.stops.includes(from)) continue;
+
+for(let l2 of lines){
+
+if(!l2.stops.includes(to)) continue;
+
+if(l1.name===l2.name) continue;
+
+for(let stop of l1.stops){
+
+if(l2.stops.includes(stop)){
+
+result.innerHTML=`
+
+<br>
+
+<div class="card">
+
+<h3>Spojení s přestupem</h3>
+
+<br>
+
+<span class="badge" style="background:${l1.color}">
+${l1.name}
+</span>
+
+${from} → ${stop}
+
+<br><br>
+
+<span class="badge" style="background:${l2.color}">
+${l2.name}
+</span>
+
+${stop} → ${to}
+
+<br><br>
+
+<b>Přestup:</b> ${stop}
+
+</div>
+
+`;
+
+return;
+
+}
+
+}
+
+}
+
+}
+
+result.innerHTML=`
+
+<br>
+
+<div class="card">
+
+<h3>Spojení nenalezeno</h3>
+
+<br>
+
+Zkus jiné zastávky.
+
+</div>
+
+`;
+
+}
+
+</script>
+
+</body>
+  </html>
