@@ -321,14 +321,19 @@ Náměstí → Vesnice → Nemocnice → Škola → Banka
 <span class="badge bus">205</span>
 Náměstí → Obchodní centrum → Vesnice → Nemocnice
 </div>
+  
+<div class="route">
+<span class="badge bus">306</span>
+Banka → Vesnice → Zoo
+</div>
 
 <div class="route">
-<span class="badge metro">M1</span>
+<span class="badge metro">A</span>
 Banka → Škola → Parkoviště
 </div>
 
 <div class="route">
-<span class="badge vlak">V1</span>
+<span class="badge vlak">S1</span>
 Letiště → Vesnice → Nemocnice → Radnice → Obchodní centrum → Les
 </div>
 
@@ -347,15 +352,19 @@ Letiště → Vesnice → Nemocnice → Radnice → Obchodní centrum → Les
 <br>
 
 <div class="notice good">
-Metro M1 jezdí bez omezení.
+Metro A jezdí bez omezení.
 </div>
 
 <div class="notice warn">
 Bus 205 má zpoždění 3 minuty.
 </div>
 
+<div class="notice warn">
+Bus 101 má zpoždění 1 minutu.
+</div>
+
 <div class="notice good">
-Vlak V1 jezdí bez omezení.
+Vlak S1 jezdí bez omezení.
 </div>
 
 </div>
@@ -370,6 +379,7 @@ Vlak V1 jezdí bez omezení.
 
 const stops=[
 "Letiště",
+"Zoo",
 "Nemocnice",
 "Radnice",
 "Obchodní centrum",
@@ -387,16 +397,23 @@ const lines=[
 
 {
 type:"metro",
-name:"M1",
+name:"A",
 color:"#0066ff",
 stops:["Banka","Škola","Parkoviště"]
 },
 
 {
 type:"vlak",
-name:"V1",
+name:"S1",
 color:"#444",
 stops:["Letiště","Vesnice","Nemocnice","Radnice","Obchodní centrum","Les"]
+},
+
+{
+type:"Bus",
+name:"306",
+color:"#444",
+stops:["Banka","Vesnice","Zoo"]
 },
 
 {
