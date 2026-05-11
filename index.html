@@ -380,240 +380,108 @@ Autobus 306 jezdí bez omezení.
 </div>
 
 <script>
-
 /* STOPS */
+const stops = ["Letiště", "Autobusové nádraží", "Zoo", "Nemocnice", "Radnice", "Obchodní centrum", "Les", "Škola", "Banka", "Parkoviště", "Náměstí", "Vesnice"];
 
-const stops=[
-"Letiště",
-"Autobusové nádraží",
-"Zoo",
-"Nemocnice",
-"Radnice",
-"Obchodní centrum",
-"Les",
-"Škola",
-"Banka",
-"Parkoviště",
-"Náměstí",
-"Vesnice"
-];
-
-/* LINES */
-
-const lines=[
-
-{
-type:"metro",
-name:"A",
-color:"#0066ff",
-stops:["Banka","Škola","Parkoviště"]
-},
-
-{
-type:"vlak",
-name:"S1",
-color:"#444",
-stops:["Letiště","Vesnice","Nemocnice","Radnice","Obchodní centrum","Les"]
-},
-
-{
-type:"Bus",
-name:"306",
-color:"#00aa55",
-stops:["Banka","Vesnice","Zoo"]
-},
-
-{
-type:"bus",
-name:"101",
-color:"#00aa55",
-stops:["Náměstí","Vesnice","Nemocnice","Škola","Banka"]
-},
-
-{
-type:"bus",
-name:"205",
-color:"#ff8800",
-stops:["Náměstí","Obchodní centrum","Vesnice","Nemocnice","Autobusové nádraží"]
-}
-
+/* LINES - Časy upraveny podle tvého zadání (celková linka / počet úseků) */
+const lines = [
+    { type: "metro", name: "A", color: "#0066ff", totalLineTime: 2, stops: ["Banka", "Škola", "Parkoviště"] },
+    { type: "vlak", name: "S1", color: "#444", totalLineTime: 8, stops: ["Letiště", "Vesnice", "Nemocnice", "Radnice", "Obchodní centrum", "Les"] },
+    { type: "bus", name: "306", color: "#00aa55", totalLineTime: 4, stops: ["Banka", "Vesnice", "Zoo"] },
+    { type: "bus", name: "101", color: "#00aa55", totalLineTime: 9, stops: ["Náměstí", "Vesnice", "Nemocnice", "Škola", "Banka"] },
+    { type: "bus", name: "205", color: "#ff8800", totalLineTime: 7, stops: ["Náměstí", "Obchodní centrum", "Vesnice", "Nemocnice", "Autobusové nádraží"] }
 ];
 
 /* MENU */
-
-function showPage(id){
-
-document.querySelectorAll(".page").forEach(page=>{
-page.classList.remove("active");
-});
-
-document.getElementById(id).classList.add("active");
-
+function showPage(id) {
+    document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
 }
 
 /* AUTOCOMPLETE */
-
-function suggest(input,id){
-
-const box=document.getElementById(id);
-
-box.innerHTML="";
-
-const value=input.value.toLowerCase();
-
-if(!value){
-box.style.display="none";
-return;
-}
-
-const filtered=stops.filter(stop=>
-stop.toLowerCase().includes(value)
-);
-
-filtered.forEach(stop=>{
-
-const div=document.createElement("div");
-
-div.innerText=stop;
-
-div.onclick=()=>{
-input.value=stop;
-box.style.display="none";
-};
-
-box.appendChild(div);
-
-});
-
-box.style.display=filtered.length ? "block" : "none";
-
+function suggest(input, id) {
+    const box = document.getElementById(id);
+    box.innerHTML = "";
+    const value = input.value.toLowerCase();
+    if (!value) { box.style.display = "none"; return; }
+    const filtered = stops.filter(s => s.toLowerCase().includes(value));
+    filtered.forEach(s => {
+        const div = document.createElement("div");
+        div.innerText = s;
+        div.onclick = () => { input.value = s; box.style.display = "none"; };
+        box.appendChild(div);
+    });
+    box.style.display = filtered.length ? "block" : "none";
 }
 
 /* SEARCH */
+function findRoute() {
+    const from = document.getElementById("from").value;
+    const to = document.getElementById("to").value;
+    const result = document.getElementById("result");
+    result.innerHTML = "";
 
-function findRoute(){
+    if (!from || !to) return;
+    if (from === to) { result.innerHTML = "<div class='card'>Jste v cíli.</div>"; return; }
 
-const from=document.getElementById("from").value;
-const to=document.getElementById("to").value;
+    let queue = [[from, [], 0]]; 
+    let visited = new Set([from]);
 
-const result=document.getElementById("result");
+    while (queue.length > 0) {
+        let [curr, path, totalTime] = queue.shift();
 
-result.innerHTML="";
+        for (let line of lines) {
+            if (line.stops.includes(curr)) {
+                let currIdx = line.stops.indexOf(curr);
+                
+                for (let i = 0; i < line.stops.length; i++) {
+                    let next = line.stops[i];
+                    if (next === curr || visited.has(next)) continue;
 
-/* DIRECT */
+                    // Výpočet času úseku: (Celkový čas linky / počet mezer mezi zastávkami) * ujeté zastávky
+                    let segmentsInLine = line.stops.length - 1;
+                    let timePerStop = line.totalLineTime / segmentsInLine;
+                    let numStops = Math.abs(i - currIdx);
+                    let segmentTime = Math.round(numStops * timePerStop);
+                    
+                    // Přestup v MC nastaven na 1 minutu
+                    let transferWait = path.length > 0 ? 1 : 0; 
+                    
+                    let newPath = [...path, { line, from: curr, to: next, time: segmentTime }];
+                    let newTotalTime = totalTime + segmentTime + transferWait;
 
-for(let line of lines){
+                    if (next === to) {
+                        renderResult(newPath, newTotalTime);
+                        return;
+                    }
 
-const i1=line.stops.indexOf(from);
-const i2=line.stops.indexOf(to);
-
-if(i1!=-1 && i2!=-1){
-
-result.innerHTML=`
-
-<br>
-
-<div class="card">
-
-<span class="badge" style="background:${line.color}">
-${line.name}
-</span>
-
-<h3>Přímé spojení</h3>
-
-<br>
-
-${from} → ${to}
-
-<br><br>
-
-Typ dopravy:
-<b>${line.type}</b>
-
-</div>
-
-`;
-
-return;
-
+                    visited.add(next);
+                    queue.push([next, newPath, newTotalTime]);
+                }
+            }
+        }
+    }
+    result.innerHTML = "<div class='card'><h3>Spojení nenalezeno</h3></div>";
 }
 
-}
+function renderResult(path, totalTime) {
+    let html = `<br><div class="card"><h3>Spojení nalezeno</h3><br>`;
+    
+    path.forEach((s, i) => {
+        html += `
+            <div style="border-left: 4px solid ${s.line.color}; padding-left: 10px; margin-bottom: 15px;">
+                <span class="badge" style="background:${s.line.color}">${s.line.name}</span>
+                <b>${s.from} → ${s.to}</b><br>
+                <small>Doba jízdy: ${s.time} min</small>
+            </div>
+        `;
+        if (i < path.length - 1) {
+            html += `<div style="margin: 10px 0; color: #c40000; font-weight: bold;">↓ Přestup (1 min)</div>`;
+        }
+    });
 
-/* TRANSFER */
-
-for(let l1 of lines){
-
-if(!l1.stops.includes(from)) continue;
-
-for(let l2 of lines){
-
-if(!l2.stops.includes(to)) continue;
-
-if(l1.name===l2.name) continue;
-
-for(let stop of l1.stops){
-
-if(l2.stops.includes(stop)){
-
-result.innerHTML=`
-
-<br>
-
-<div class="card">
-
-<h3>Spojení s přestupem</h3>
-
-<br>
-
-<span class="badge" style="background:${l1.color}">
-${l1.name}
-</span>
-
-${from} → ${stop}
-
-<br><br>
-
-<span class="badge" style="background:${l2.color}">
-${l2.name}
-</span>
-
-${stop} → ${to}
-
-<br><br>
-
-<b>Přestup:</b> ${stop}
-
-</div>
-
-`;
-
-return;
-
-}
-
-}
-
-}
-
-}
-
-result.innerHTML=`
-
-<br>
-
-<div class="card">
-
-<h3>Spojení nenalezeno</h3>
-
-<br>
-
-Zkus jiné zastávky.
-
-</div>
-
-`;
-
+    html += `<hr><br><b>Celkový čas cesty: ${totalTime} min</b></div>`;
+    document.getElementById("result").innerHTML = html;
 }
 
 </script>
